@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Collaboration Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        input, button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #0080ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005bb5;
+        }
+        #chat-box {
+            height: 200px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #fff;
+        }
+        .message {
+            padding: 5px;
+            border-radius: 5px;
+            margin: 5px 0;
+            word-wrap: break-word;
+        }
+        .sent {
+            background: #0080ff;
+            color: white;
+            text-align: right;
+        }
+        .received {
+            background: #f0f0f0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Section -->
+<section id="authSection">
+    <h2>Login</h2>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="Enter email" required>
+        <input type="password" id="password" placeholder="Enter password" required>
+        <button type="submit">Login</button>
+    </form>
+</section>
+
+<!-- Messaging & File Sharing Section -->
+<section id="chatSection" class="hidden">
+    <h2>Chat & File Sharing</h2>
+    <p id="userInfo"></p>
+    <div id="chat-box"></div>
+    <input type="text" id="chat-input" placeholder="Type a message">
+    <button id="send-message">Send</button>
+
+    <!-- File Sharing Section -->
+    <input type="file" id="fileInput">
+    <button id="uploadFile">Upload File</button>
+    <p id="uploadStatus"></p>
+
+    <button id="logoutBtn">Logout</button>
+</section>
+
+<script type="module">
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-storage.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAVOHZTCK1n3KvUOPN_6euRTvYYgAeZPFU",
+        authDomain: "student-86f0b.firebaseapp.com",
+        projectId: "student-86f0b",
+        storageBucket: "student-86f0b.appspot.com",
+        messagingSenderId: "877569066341",
+        appId: "1:877569066341:web:685b23b623b765c9668d8c",
+        measurementId: "G-1HELT4NYP7"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const messagesCollection = collection(db, "messages");
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const loginForm = document.getElementById("loginForm");
+        const authSection = document.getElementById("authSection");
+        const chatSection = document.getElementById("chatSection");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const userInfo = document.getElementById("userInfo");
+        const chatBox = document.getElementById("chat-box");
+        const chatInput = document.getElementById("chat-input");
+        const sendMessageButton = document.getElementById("send-message");
+        const fileInput = document.getElementById("fileInput");
+        const uploadFileButton = document.getElementById("uploadFile");
+        const uploadStatus = document.getElementById("uploadStatus");
+
+        let currentUserEmail = "";
+
+        // User Login
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                showChat(userCredential.user.email);
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+                showLogin();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Auth State Change
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserEmail = user.email;
+                showChat(user.email);
+                loadMessages();
+            } else {
+                showLogin();
+            }
+        });
+
+        function showChat(email) {
+            authSection.classList.add("hidden");
+            chatSection.classList.remove("hidden");
+            userInfo.textContent = `Welcome, ${email}!`;
+        }
+
+        function showLogin() {
+            authSection.classList.remove("hidden");
+            chatSection.classList.add("hidden");
+        }
+
+        // Send Message
+        sendMessageButton.addEventListener("click", async () => {
+            const message = chatInput.value.trim();
+            if (message !== "") {
+                try {
+                    await addDoc(messagesCollection, {
+                        sender: currentUserEmail,
+                        text: message,
+                        timestamp: serverTimestamp()
+                    });
+                    chatInput.value = "";
+                } catch (error) {
+                    alert("Error sending message.");
+                }
+            }
+        });
+
+        // Load Messages
+        function loadMessages() {
+            const messagesQuery = query(messagesCollection, orderBy("timestamp"));
+
+            onSnapshot(messagesQuery, (snapshot) => {
+                chatBox.innerHTML = "";
+                snapshot.forEach((doc) => {
+                    const messageData = doc.data();
+                    const messageElement = document.createElement("div");
+                    messageElement.classList.add("message", messageData.sender === currentUserEmail ? "sent" : "received");
+                    messageElement.innerHTML = `<strong>${messageData.sender}:</strong> ${messageData.text}`;
+                    chatBox.appendChild(messageElement);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
+        // Upload File
+        uploadFileButton.addEventListener("click", () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Please select a file.");
+                return;
+            }
+
+            const storageRef = ref(storage, `uploads/${file.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+
+            uploadTask.on("state_changed", null, (error) => {
+                uploadStatus.textContent = "Upload failed.";
+            }, async () => {
+                const fileURL = await getDownloadURL(uploadTask.snapshot.ref);
+                alert("File uploaded successfully: " + fileURL);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
