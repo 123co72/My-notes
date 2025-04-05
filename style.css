@@ -1,0 +1,111 @@
+/* style.css */
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+header.main-header {
+    background-color: #0080ff;
+    color: white;
+    padding: 1em;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    width: 60px;
+    height: auto;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    margin-top: 10px;
+}
+
+.nav-links li a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+}
+
+#toggle-dark {
+    margin-top: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+section {
+    padding: 2em;
+    max-width: 900px;
+    margin: auto;
+}
+
+.service-boxes,
+.team-grid {
+    display: flex;
+    gap: 1em;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.service,
+.team-member {
+    background-color: white;
+    padding: 1em;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    flex: 1 1 250px;
+    text-align: center;
+}
+
+.team-member img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.testimonial {
+    background-color: white;
+    margin: 1em 0;
+    padding: 1em;
+    border-left: 4px solid #0080ff;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 1em;
+}
+
+/* Dark Mode */
+body.dark-mode {
+    background-color: #121212;
+    color: #f1f1f1;
+}
+
+body.dark-mode header.main-header {
+    background-color: #005bb5;
+}
+
+body.dark-mode .service,
+body.dark-mode .team-member,
+body.dark-mode .testimonial {
+    background-color: #1e1e1e;
+    color: #ddd;
+}
+
+body.dark-mode footer {
+    background-color: #000;
+}
