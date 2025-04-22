@@ -296,6 +296,19 @@
       const now = new Date();
       clockEl.textContent = now.toLocaleTimeString();
     }, 1000);
+    // worker.js
+
+// Listen for messages from the main thread
+onmessage = function(event) {
+  const number = event.data;
+  const result = number * number;
+
+  // Simulate a heavy task with delay (optional)
+  // for (let i = 0; i < 1e8; i++) {}
+
+  // Send result back to the main thread
+  postMessage(result);
+};
   </script>
 </body>
 </html>
